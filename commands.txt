@@ -1,0 +1,48 @@
+- where does the image on artifactory fit in? Bitnami wordpress?
+- Multisite configuration?
+- how to update wordpress?
+
+Problematic commit - https://github.com/bcgov/wordpress/commit/2a48dab7f7b9a14a1e89847695340fb0c21fc4f2
+
+configs were moved into docker builds, but not cahnged in deploy configs. Ex. deploy-nginx-wordpress.yaml
+
+
+-project namespace is hardcoded
+
+- maria db deployment replica set hits limits, change from:
+- resources:
+limits:
+    cpu: 500m
+    memory: 500Mi
+requests:
+    cpu: 100m
+    memory: 100Mi
+
+limits:
+    cpu: 500m
+    memory: 500Mi
+requests:
+    cpu: 100m
+    memory: 100Mi
+
+
+- changed artifactory address:
+from docker-remote.artifacts.developer.gov.bc.ca/alpine:3.15.4
+to artifacts.developer.gov.bc.ca/docker-remote/alpine:3.15.4
+(old url certificate has wrong date)
+
+Need to start builds manually to populate imagestreams
+
+remember to rename images to test
+oc -n c0cce6-tools tag wordpress-mariadb-run:dev wordpress-mariadb-run:test
+
+oc -n c0cce6-tools tag wordpress-nginx-run:dev wordpress-nginx-run:test
+
+oc -n c0cce6-tools tag wordpress-wordpress-run:dev wordpress-wordpress-run:test
+
+oc -n c0cce6-tools tag wordpress-sidecar-run:dev wordpress-sidecar-run:test
+
+sidecar requests 6gb, hits the quota, reduced to 3
+
+for prod:
+oc -n c0cce6-tools tag wordpress-mariadb-run:dev wordpress-mariadb-run:prod

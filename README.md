@@ -1,31 +1,3 @@
-![Lifecycle:Experimental](https://img.shields.io/badge/Lifecycle-Experimental-339999)
+# Digimod WordPress deployments
 
-# WordPress Deployments
-
-## Running on Docker
-The project can also be run locally using Docker and Docker Compose.  Refer to [Running with Docker](./dev/README.md) for instructions.
-
-## Running on OpenShift
-To deploy using a local instance of OpenShift, refer to [Running on OpenShift](./openshift/templates/README.md).  These instructions, apart from the steps that are specific to setting up your local environment, can be used to get the project deployed to a production OpenShift environment.
-
-
-## Code of Conduct
-Please refer to the [Code of Conduct](./CODE_OF_CONDUCT.md) 
-
-## Contributing
-For information on how to contribute, refer to [Contributing](CONTRIBUTING.md)
-
-## License
-Code released under the [Apache License, Version 2.0](./LICENSE).
-
-### Todo
-* Look into bringing in Wordpress php-fpm-74 not raw php (might have been done this way due to permissions and configurations)
-* Look into bring mariadb base image (might have been done this way due to permissions and configurations).
-* Implement image  monitoring through dependabot. (DESCW-433)
-  * Alpine
-  * nginx
-  * mariadb
-  * WordPress
-  * php-fpm
-  * ubuntu
-
+This is a fork of GDX [WordPress Deployments Repo](https://github.com/bcgov/wordpress) customized for deployments with digital.gov.bc.ca
