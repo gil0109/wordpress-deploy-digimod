@@ -21,5 +21,5 @@ jobs:
           openshift_server_url: ${{ secrets.OpenShiftServerURL }}
           parameters: '{"apitoken": "${{ secrets.OpenShiftToken }}", "acceptUntrustedCerts": "true"}'
           cmd: |
-            oc project 23576a-tools
+            oc project c0cce6-tools
             oc start-build wordpress-wordpress-run --follow
