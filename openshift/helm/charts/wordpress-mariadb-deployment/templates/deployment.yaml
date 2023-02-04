@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"{{ .Values.app_name }}-mariadb-run:{{ .Values.env_name }}","namespace":
+      "{{ .Values.project_namespace }}-tools"},"fieldPath":"spec.template.spec.containers[?(@.name==\"{{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}\")].image"}]'
+  labels:
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/instance: coreDB
+    app.kubernetes.io/part-of: {{ .Values.app_name }}
+    app.openshift.io/runtime: mariadb
+  name: {{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}
+  namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app_name }}
+      env: {{ .Values.env_name }}
+      name: {{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}
+      role: {{ .Values.role_name }}
+      site: {{ .Values.site_name }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        alpha.image.policy.openshift.io/resolve-names: '*'
+      labels:
+        app: {{ .Values.app_name }}
+        env: {{ .Values.env_name }}
+        name: {{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}
+        net-tcp-3306: server
+        role: {{ .Values.role_name }}
+        site: {{ .Values.site_name }}
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_ROOT_PASSWORD_FILE
+          value: /run/secrets/mysql_root_password
+        - name: MYSQL_PASSWORD_FILE
+          value: /run/secrets/mysql_password
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.app_name }}-config--{{ .Values.site_name }}
+        image: image-registry.openshift-image-registry.svc:5000/{{ .Values.project_namespace }}-tools/wordpress-mariadb-run:{{ .Values.env_name }}
+        imagePullPolicy: Always
+        name: {{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}
+        ports:
+        - containerPort: {{ .Values.app_port }}
+          protocol: TCP
+        resources:
+          limits:
+            cpu: {{ .Values.cpu_limit }}
+            memory: {{ .Values.memory_limit }}
+          requests:
+            cpu: {{ .Values.cpu_request }}
+            memory: {{ .Values.memory_request }}
+        volumeMounts:
+        - mountPath: /etc/my.cnf.d/my.cnf
+          name: db-configmap-volume
+          subPath: my.cnf
+        - mountPath: /run/secrets/mysql_root_password
+          name: db-secrets-volume
+          readOnly: true
+          subPath: mysql_root_password
+        - mountPath: /run/secrets/mysql_password
+          name: db-secrets-volume
+          readOnly: true
+          subPath: mysql_password
+        - mountPath: /var/lib/mysql
+          name: db-volume
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: my.cnf
+            path: my.cnf
+          name: {{ .Values.app_name }}-config--{{ .Values.site_name }}
+        name: db-configmap-volume
+      - name: db-secrets-volume
+        secret:
+          defaultMode: 420
+          items:
+          - key: MYSQL_PASSWORD
+            path: mysql_password
+          - key: MYSQL_ROOT_PASSWORD
+            path: mysql_root_password
+          secretName: {{ .Values.app_name }}-{{ .Values.role_name }}-secrets--{{ .Values.site_name }}
+      - name: db-volume
+        persistentVolumeClaim:
+          claimName: {{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}

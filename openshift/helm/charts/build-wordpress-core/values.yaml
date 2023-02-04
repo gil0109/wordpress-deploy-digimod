@@ -1,0 +1,10 @@
+app_name: wordpress
+env_name: tools
+git_ref: main
+git_url: https://github.com/bcgov/wordpress.git
+image_tag: latest
+project_namespace: e49a54
+role_name: wordpress-run
+runtimeimage_name: php74-fpm-base
+runtimeimage_tag: dev
+source_context_dir: openshift/templates/images/wordpress/docker

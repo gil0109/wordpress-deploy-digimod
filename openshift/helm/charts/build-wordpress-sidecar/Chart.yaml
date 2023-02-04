@@ -1,0 +1,4 @@
+description: Build templates for the image of the maintenance sidecar.
+name: build-wordpress-sidecar
+tags: sidecar,wordpress
+version: v0.0.1

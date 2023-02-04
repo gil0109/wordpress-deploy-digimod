@@ -1,0 +1,29 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    env: {{ .Values.env_name }}
+    name: {{ .Values.app_name }}-{{ .Values.role_name }}
+  name: {{ .Values.app_name }}-{{ .Values.role_name }}
+spec:
+  failedBuildsHistoryLimit: 2
+  output:
+    to:
+      kind: ImageStreamTag
+      name: {{ .Values.app_name }}-{{ .Values.role_name }}:{{ .Values.image_tag }}
+  postCommit: {}
+  resources: {}
+  runPolicy: Serial
+  source:
+    contextDir: {{ .Values.source_context_dir }}
+    git:
+      ref: {{ .Values.git_ref }}
+      uri: {{ .Values.git_url }}
+    type: Git
+  strategy:
+    dockerStrategy:
+      forcePull: true
+    type: Docker
+  successfulBuildsHistoryLimit: 2
+  triggers:
+  - type: ConfigChange

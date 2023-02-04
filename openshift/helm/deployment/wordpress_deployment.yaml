@@ -1,0 +1,229 @@
+kind: Template
+apiVersion: v1
+name: wordpress_deployment
+parameters:
+
+  - name: APP_NAME
+    displayName: "App Name"
+    description: "The name of the application (grouped)."
+    required: true
+    value: "wordpress"
+  - name: APP_DOMAIN
+    displayName: "Application Hostname"
+    description: "The exposed hostname that will route to the the application."
+    value: "wpp-dev.apps.silver.devops.gov.bc.ca"
+  - name: PROJECT_NAMESPACE
+    displayName: "OpenShift Project Namespace"
+    description: "The namespace of the OpenShift project containing the application."
+    required: true
+    value: "e49a54"
+  - name: ENV_NAME
+    displayName: "Environment name"
+    description: "The name for this environment [dev, test, prod, tools]"
+    required: true
+    value: "test"
+  - name: SITE_NAME
+    displayName: "Site name"
+    description: "The name for the site (a-zA-Z_)"
+    required: true
+    value: "payments"
+
+# CONFIG
+  - name: WORDPRESS_MULTISITE
+    displayName: "WORDPRESS_MULTISITE"
+    description: "Set to 1 to enable multisite, 0 to disable.  IMPORTANT, it has to be 0 for initial setup."
+    required: true
+    value: ""
+  - name: CONFIG_ROLE_NAME
+    displayName: "Component Name"
+    description: "The name of the application role."
+    required: true
+    value: "config"
+
+# port 3306
+
+  - name: PORT3306
+    displayName: "Port number"
+    description: "Port number"
+    required: true
+    value: "3306"
+  - name: PROTOCOL
+    displayName: "Protocol name lowercase"
+    description: "The protocol name [tcp, udp]"
+    required: true
+    value: "tcp"
+  - name: PROTOCOL_U
+    displayName: "The same protocol name, but uppercase."
+    description: "The protocol name [TCP, UDP]"
+    required: true
+    value: "TCP"
+
+#port 9000
+
+  - name: PORT9000
+    displayName: "Port number"
+    description: "Port number"
+    required: true
+    value: "9000"
+
+objects:
+
+
+
+#CONFIG MAP
+
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ${APP_NAME}-${CONFIG_ROLE_NAME}--${SITE_NAME}
+      namespace: ${PROJECT_NAMESPACE}-${ENV_NAME}
+      annotations:
+        description: "WordPress configurations"
+      labels:
+        name: ${APP_NAME}-${CONFIG_ROLE_NAME}-env-config--${SITE_NAME}
+        app: ${APP_NAME}
+        env: ${ENV_NAME}
+        site: ${SITE_NAME}
+    data:
+      # Database
+      MYSQL_USER: ${SITE_NAME}_user
+      MYSQL_DATABASE: ${SITE_NAME}_${ENV_NAME}
+      # Backups
+      backup.conf: "mariadb=${APP_NAME}-mariadb--${SITE_NAME}:3306/${SITE_NAME}_${ENV_NAME}"
+      nginx.conf: |-
+        # Extra ngix configs.
+      # WordPress
+      WORDPRESS_DB_HOST: ${APP_NAME}-mariadb--${SITE_NAME}
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/WORDPRESS_DB_PASSWORD
+      WORDPRESS_CONFIG_EXTRA: |-
+        /* Multisite */
+        define( 'WP_ALLOW_MULTISITE', true );
+        define( 'MULTISITE', !!filter_var( getenv_docker( 'WORDPRESS_MULTISITE', '0' ), FILTER_VALIDATE_BOOLEAN ) );
+        define( 'SUBDOMAIN_INSTALL', false );
+        define( 'DOMAIN_CURRENT_SITE', '${APP_DOMAIN}' );
+        define( 'PATH_CURRENT_SITE', '/' );
+        define( 'SITE_ID_CURRENT_SITE', intval( getenv_docker( 'WORDPRESS_SITE_ID_CURRENT_SITE', '1' ) ) );
+        define( 'BLOG_ID_CURRENT_SITE', intval( getenv_docker( 'WORDPRESS_SITE_ID_CURRENT_SITE', '1' ) ) );
+        /* For Active Directory Integration on Multisite. */
+        define( 'IS_WPMU', true );
+        /* Other configs */
+        define( 'WP_DEBUG_LOG', false );
+      WORDPRESS_AUTH_KEY_FILE: /run/secrets/wordpress/WORDPRESS_AUTH_KEY
+      WORDPRESS_AUTH_SALT_FILE: /run/secrets/wordpress/WORDPRESS_AUTH_SALT
+      WORDPRESS_LOGGED_IN_KEY_FILE: /run/secrets/wordpress/WORDPRESS_LOGGED_IN_KEY
+      WORDPRESS_LOGGED_IN_SALT_FILE: /run/secrets/wordpress/WORDPRESS_LOGGED_IN_SALT
+      WORDPRESS_NONCE_KEY_FILE: /run/secrets/wordpress/WORDPRESS_NONCE_KEY
+      WORDPRESS_NONCE_SALT_FILE: /run/secrets/wordpress/WORDPRESS_NONCE_SALT
+      WORDPRESS_SECURE_AUTH_KEY_FILE: /run/secrets/wordpress/WORDPRESS_SECURE_AUTH_KEY
+      WORDPRESS_SECURE_AUTH_SALT_FILE: /run/secrets/wordpress/WORDPRESS_SECURE_AUTH_SALT
+       # PHP configuration [to be moved to image build]
+      app.ini: |-
+        upload_max_filesize=${MAX_FILE_SIZE}
+        post_max_size=${MAX_FILE_SIZE}
+        memory_limit=256M
+        max_execution_time=300
+        max_input_time=300
+      # Maria DB configuration [to be moved to image build]
+      my.cnf: |-
+        [mariadb]
+        innodb_buffer_pool_size = 10M
+        innodb_log_buffer_size = 512K # default / 2
+        innodb_log_file_size = 8M
+        lower_case_table_names = 1
+        key_buffer_size = 4194304 # default / 2
+      # Ngnix configuration [to be moved to image build]
+      default.conf: |-
+        server {
+          index index.php index.html;
+          server_name localhost;
+          #listen 8443 ssl;
+          listen 8080;
+          error_log  /dev/stderr;
+          access_log /dev/stdout;
+          root /var/www/html/;
+          # Sets Nginx max file upload size;
+          client_max_body_size 1000M;
+          location ~ /\. {
+              return 404;
+              deny all;
+          }
+          location / {
+              try_files $uri $uri/ /index.php?$args; 
+          }
+          # Required for multi-site wp-admin.
+          if (!-e $request_filename) {
+              rewrite /wp-admin$ $scheme://$host$uri/ permanent;  
+              rewrite ^(/[^/]+)?(/wp-.*) $2 last;                     
+              rewrite ^(/[^/]+)?(/.*.php) $2 last;                   
+          }
+          location /nginx_status {
+              stub_status on;
+              access_log off;
+              log_not_found off;
+              allow 127.0.0.1;
+              deny all;
+          }
+          location ~ \.php$ {
+              try_files $uri =404;
+              fastcgi_split_path_info ^(.+\.php)(/.+)$;
+              fastcgi_pass 127.0.0.1:9000;
+              fastcgi_index index.php;
+              include fastcgi_params;
+              fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+              fastcgi_param PATH_INFO $fastcgi_path_info;
+              fastcgi_param SERVER_NAME $server_name; 
+          }
+        }
+
+# NETWORKING POLICY
+
+  - kind: NetworkPolicy
+    apiVersion: networking.k8s.io/v1
+    metadata:
+      name: allow-from-openshift-ingress
+      namespace: ${PROJECT_NAMESPACE}-${ENV_NAME}
+    spec:
+      podSelector: {}
+      ingress:
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  network.openshift.io/policy-group: ingress
+      policyTypes:
+        - Ingress
+
+  - kind: NetworkPolicy
+    apiVersion: networking.k8s.io/v1
+    metadata:
+      name: allow-${PROTOCOL}-port-${PORT3306}
+      namespace: ${PROJECT_NAMESPACE}-${ENV_NAME}
+    spec:
+      podSelector:
+        matchLabels:
+          net-${PROTOCOL}-${PORT3306}: "server"
+      ingress:
+      - from:
+        - podSelector:
+            matchLabels:
+              net-${PROTOCOL}-${PORT3306}: "client"
+        ports:
+        - protocol: ${PROTOCOL_U}
+          port: ${{PORT3306}}
+
+  - kind: NetworkPolicy
+    apiVersion: networking.k8s.io/v1
+    metadata:
+      name: allow-${PROTOCOL}-port-${PORT9000}
+      namespace: ${PROJECT_NAMESPACE}-${ENV_NAME}
+    spec:
+      podSelector:
+        matchLabels:
+          net-${PROTOCOL}-${PORT9000}: "server"
+      ingress:
+      - from:
+        - podSelector:
+            matchLabels:
+              net-${PROTOCOL}-${PORT9000}: "client"
+        ports:
+        - protocol: ${PROTOCOL_U}
+          port: ${{PORT9000}}

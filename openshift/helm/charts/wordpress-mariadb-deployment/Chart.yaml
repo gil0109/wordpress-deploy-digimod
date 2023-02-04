@@ -1,0 +1,4 @@
+description: Deployment templates for the WordPress mariadb deploy.
+name: wordpress-mariadb-deployment
+tags: mariadb,wordpress
+version: v0.0.1

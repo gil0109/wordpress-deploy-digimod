@@ -1,0 +1,13 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  annotations:
+    description: Keeps track of base WordPress core images
+  labels:
+    env: {{ .Values.env_name }}
+    name: {{ .Values.app_name }}-{{ .Values.role_name }}-images
+  name: {{ .Values.app_name }}-{{ .Values.role_name }}
+  namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
+spec:
+  lookupPolicy:
+    local: true

@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-openshift-ingress
+  namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
+spec:
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          network.openshift.io/policy-group: ingress
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-{{ .Values.protocol }}-port-{{ .Values.port3306 }}
+  namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          net-{{ .Values.protocol }}-{{ .Values.port3306 }}: client
+    ports:
+    - port: {{ .Values.port3306 }}
+      protocol: {{ .Values.protocol_u }}
+  podSelector:
+    matchLabels:
+      net-{{ .Values.protocol }}-{{ .Values.port3306 }}: server
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-{{ .Values.protocol }}-port-{{ .Values.port9000 }}
+  namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          net-{{ .Values.protocol }}-{{ .Values.port9000 }}: client
+    ports:
+    - port: {{ .Values.port9000 }}
+      protocol: {{ .Values.protocol_u }}
+  podSelector:
+    matchLabels:
+      net-{{ .Values.protocol }}-{{ .Values.port9000 }}: server

@@ -1,0 +1,4 @@
+description: Build templates for the nginx web server of the WordPress deploy.
+name: build-wordpress-nginx
+tags: nginx,wordpress
+version: v0.0.1

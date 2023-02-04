@@ -1,0 +1,15 @@
+app_name: wordpress
+app_port: "3306"
+cpu_limit: 500m
+cpu_request: 100m
+env_name: test
+memory_limit: 500Mi
+memory_request: 100Mi
+mysql_password: '# TODO: must define a default value for .mysql_password'
+mysql_root_password: '# TODO: must define a default value for .mysql_root_password'
+pool_name: pool
+project_namespace: e49a54
+replicas: "1"
+role_name: mariadb
+site_name: payments
+volume_size: 500M

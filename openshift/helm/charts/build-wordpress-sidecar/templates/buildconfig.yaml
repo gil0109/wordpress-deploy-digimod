@@ -1,0 +1,37 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  annotations:
+    description: This (final) build takes the generated base artifacts and serves
+      them through a runtime container
+  labels:
+    app: {{ .Values.app_name }}
+    env: {{ .Values.env_name }}
+    name: {{ .Values.app_name }}-{{ .Values.role_name }}
+    role: {{ .Values.role_name }}
+  name: {{ .Values.app_name }}-{{ .Values.role_name }}
+  namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
+spec:
+  completionDeadlineSeconds: 1800
+  failedBuildsHistoryLimit: 2
+  output:
+    to:
+      kind: ImageStreamTag
+      name: {{ .Values.app_name }}-{{ .Values.role_name }}:{{ .Values.image_tag }}
+  resources: {}
+  runPolicy: Parallel
+  source:
+    contextDir: {{ .Values.source_context_dir }}
+    git:
+      ref: {{ .Values.git_ref }}
+      uri: {{ .Values.git_url }}
+    type: Git
+  strategy:
+    dockerStrategy:
+      buildArgs:
+      - name: CHANGE_USER
+        value: "{{ .Values.run_as_user }}"
+    type: Docker
+  successfulBuildsHistoryLimit: 2
+  triggers:
+  - type: ConfigChange
