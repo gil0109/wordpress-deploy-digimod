@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.app_name }}-{{ .Values.wordpress_role_name }}-{{ .Values.pool_name }}
+  namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.wordpress_volume_size }}
+  storageClassName: netapp-file-backup
+  volumeMode: Filesystem

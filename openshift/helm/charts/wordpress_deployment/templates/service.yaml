@@ -6,22 +6,22 @@ metadata:
   labels:
     app: {{ .Values.app_name }}
     env: {{ .Values.env_name }}
-    name: {{ .Values.app_name }}-{{ .Values.role_name }}-{{ .Values.site_name }}
-    role: {{ .Values.role_name }}
+    name: {{ .Values.app_name }}-{{ .Values.nginx_role_name }}-{{ .Values.site_name }}
+    role: {{ .Values.nginx_role_name }}
     site: {{ .Values.site_name }}
-  name: {{ .Values.app_name }}-{{ .Values.role_name }}-{{ .Values.site_name }}
+  name: {{ .Values.app_name }}-{{ .Values.nginx_role_name }}-{{ .Values.site_name }}
   namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
 spec:
   ports:
-  - name: {{ .Values.app_port }}-tcp
-    port: {{ .Values.app_port }}
+  - name: {{ .Values.nginx_app_port }}-tcp
+    port: {{ .Values.nginx_app_port }}
     protocol: TCP
-    targetPort: {{ .Values.app_port }}
+    targetPort: {{ .Values.nginx_app_port }}
   selector:
     app: {{ .Values.app_name }}
     env: {{ .Values.env_name }}
-    name: {{ .Values.app_name }}-{{ .Values.role_name }}-{{ .Values.site_name }}
-    role: {{ .Values.role_name }}
+    name: {{ .Values.app_name }}-{{ .Values.nginx_role_name }}-{{ .Values.site_name }}
+    role: {{ .Values.nginx_role_name }}
     site: {{ .Values.site_name }}
   sessionAffinity: None
   type: ClusterIP

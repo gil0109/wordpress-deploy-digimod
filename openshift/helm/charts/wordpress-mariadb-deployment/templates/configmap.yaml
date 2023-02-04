@@ -17,7 +17,7 @@ data:
     define( 'IS_WPMU', true );
     /* Other configs */
     define( 'WP_DEBUG_LOG', false );
-  WORDPRESS_DB_HOST: {{ .Values.app_name }}-mariadb--{{ .Values.site_name }}
+  WORDPRESS_DB_HOST: {{ .Values.app_name }}-mariadb-{{ .Values.site_name }}
   WORDPRESS_DB_PASSWORD_FILE: /run/secrets/WORDPRESS_DB_PASSWORD
   WORDPRESS_LOGGED_IN_KEY_FILE: /run/secrets/wordpress/WORDPRESS_LOGGED_IN_KEY
   WORDPRESS_LOGGED_IN_SALT_FILE: /run/secrets/wordpress/WORDPRESS_LOGGED_IN_SALT
@@ -31,7 +31,7 @@ data:
     memory_limit=256M
     max_execution_time=300
     max_input_time=300
-  backup.conf: mariadb={{ .Values.app_name }}-mariadb--{{ .Values.site_name }}:3306/{{ .Values.site_name }}_{{ .Values.env_name }}
+  backup.conf: mariadb={{ .Values.app_name }}-mariadb-{{ .Values.site_name }}:3306/{{ .Values.site_name }}_{{ .Values.env_name }}
   default.conf: "server {\n  index index.php index.html;\n  server_name localhost;\n
     \ #listen 8443 ssl;\n  listen 8080;\n  error_log  /dev/stderr;\n  access_log /dev/stdout;\n
     \ root /var/www/html/;\n  # Sets Nginx max file upload size;\n  client_max_body_size
@@ -62,7 +62,7 @@ metadata:
   labels:
     app: {{ .Values.app_name }}
     env: {{ .Values.env_name }}
-    name: {{ .Values.app_name }}-{{ .Values.config_role_name }}-env-config--{{ .Values.site_name }}
+    name: {{ .Values.app_name }}-{{ .Values.config_role_name }}-env-config-{{ .Values.site_name }}
     site: {{ .Values.site_name }}
-  name: {{ .Values.app_name }}-{{ .Values.config_role_name }}--{{ .Values.site_name }}
+  name: {{ .Values.app_name }}-{{ .Values.config_role_name }}-{{ .Values.site_name }}
   namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}

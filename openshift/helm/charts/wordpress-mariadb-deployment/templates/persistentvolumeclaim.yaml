@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}
+  name: {{ .Values.app_name }}-{{ .Values.role_name }}-{{ .Values.site_name }}
   namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
 spec:
   accessModes:

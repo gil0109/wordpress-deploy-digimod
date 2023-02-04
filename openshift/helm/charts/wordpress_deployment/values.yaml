@@ -1,11 +1,31 @@
 app_domain: wpp-dev.apps.silver.devops.gov.bc.ca
 app_name: wordpress
-config_role_name: config
 env_name: test
+instance: '# TODO: must define a default value for .instance'
+nginx_app_port: "8080"
+nginx_role_name: nginx
+php_app_port: "9000"
 port3306: "3306"
 port9000: "9000"
 project_namespace: e49a54
 protocol: tcp
 protocol_u: TCP
+replicas: "1"
 site_name: payments
+wordpress_auth_key: '# TODO: must define a default value for .wordpress_auth_key'
+wordpress_auth_salt: '# TODO: must define a default value for .wordpress_auth_salt'
+wordpress_cpu_limit: 400m
+wordpress_cpu_request: 100m
+wordpress_logged_in_key: '# TODO: must define a default value for .wordpress_logged_in_key'
+wordpress_logged_in_salt: '# TODO: must define a default value for .wordpress_logged_in_salt'
+wordpress_memory_limit: 500Mi
+wordpress_memory_request: 250Mi
 wordpress_multisite: '# TODO: must define a default value for .wordpress_multisite'
+wordpress_nonce_key: '# TODO: must define a default value for .wordpress_nonce_key'
+wordpress_nonce_salt: '# TODO: must define a default value for .wordpress_nonce_salt'
+wordpress_role_name: wordpress
+wordpress_secure_auth_key: '# TODO: must define a default value for .wordpress_secure_auth_key'
+wordpress_secure_auth_salt: '# TODO: must define a default value for .wordpress_secure_auth_salt'
+wordpress_volume_name: '# TODO: must define a default value for .wordpress_volume_name'
+wordpress_volume_size: 512Mi
+pool_name: pool

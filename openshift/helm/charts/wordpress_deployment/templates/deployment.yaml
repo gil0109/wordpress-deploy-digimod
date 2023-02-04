@@ -1,0 +1,154 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"{{ .Values.app_name }}-wordpress-run:{{ .Values.env_name }}","namespace":
+      "{{ .Values.project_namespace }}-tools"},"fieldPath":"spec.template.spec.containers[?(@.name==\"{{ .Values.app_name }}-wordpress-{{ .Values.site_name }}\")].image"},{"from":{"kind":"ImageStreamTag","name":"{{ .Values.app_name }}-nginx-run:{{ .Values.env_name }}","namespace":
+      "{{ .Values.project_namespace }}-tools"},"fieldPath":"spec.template.spec.containers[?(@.name==\"{{ .Values.app_name }}-nginx-{{ .Values.site_name }}\")].image"}]'
+  labels:
+    app.kubernetes.io/component: nginx
+    app.kubernetes.io/instance: webserver
+    app.kubernetes.io/part-of: {{ .Values.app_name }}
+    app.openshift.io/runtime: nginx
+  name: {{ .Values.app_name }}-{{ .Values.nginx_role_name }}-{{ .Values.site_name }}
+  namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.app_name }}
+      env: {{ .Values.env_name }}
+      name: {{ .Values.app_name }}-{{ .Values.nginx_role_name }}-{{ .Values.site_name }}
+      role: {{ .Values.nginx_role_name }}
+      site: {{ .Values.site_name }}
+  strategy:
+    # resources: {}
+    # rollingParams:
+    #   intervalSeconds: 1
+    #   maxSurge: 25%
+    #   maxUnavailable: 25%
+    #   timeoutSeconds: 600
+    #   updatePeriodSeconds: 1
+    type: RollingUpdate
+  # triggers:
+  #   - type: ConfigChange
+  template:
+    metadata:
+      annotations:
+        alpha.image.policy.openshift.io/resolve-names: '*'
+      labels:
+        app: {{ .Values.app_name }}
+        env: {{ .Values.env_name }}
+        name: {{ .Values.app_name }}-{{ .Values.nginx_role_name }}-{{ .Values.site_name }}
+        net-tcp-8080: server
+        net-tcp-9000: client
+        role: {{ .Values.nginx_role_name }}
+        site: {{ .Values.site_name }}
+    spec:
+      volumes:
+        - configMap:
+            defaultMode: 420
+            items:
+            - key: nginx.conf
+              path: nginx.conf
+            name: {{ .Values.app_name }}-config-{{ .Values.site_name }}
+          name: nginx-configmap-volume
+        - emptyDir: {}
+          name: wordpress-htdocs
+        - name: wordpress-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.app_name }}-wordpress-{{ .Values.pool_name }}
+        - configMap:
+            defaultMode: 420
+            items:
+            - key: app.ini
+              path: app.ini
+            name: {{ .Values.app_name }}-config-{{ .Values.site_name }}
+          name: php-fpm-configmap-volume
+        - name: php-fpm-secrets-volume
+          secret:
+            defaultMode: 420
+            secretName: {{ .Values.app_name }}-{{ .Values.wordpress_role_name }}-secrets-{{ .Values.site_name }}
+        - name: mariadb-secrets-volume
+          secret:
+            defaultMode: 420
+            items:
+            - key: MYSQL_PASSWORD
+              path: MYSQL_PASSWORD
+            secretName: {{ .Values.app_name }}-mariadb-secrets-{{ .Values.site_name }}
+      containers:
+        - name: {{ .Values.app_name }}-wordpress-{{ .Values.site_name }}
+          image: image-registry.openshift-image-registry.svc:5000/{{ .Values.project_namespace }}-tools/{{ .Values.app_name }}-wordpress-run:{{ .Values.env_name }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.php_app_port }}
+              name: {{ .Values.php_app_port }}-tcp
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /var/www/html
+              name: wordpress-htdocs
+            - mountPath: /usr/local/etc/php/conf.d/zzz-app.ini
+              name: php-fpm-configmap-volume
+              subPath: app.ini
+            - mountPath: /run/secrets/wordpress
+              name: php-fpm-secrets-volume
+              readOnly: true
+            - mountPath: /run/secrets/WORDPRESS_DB_PASSWORD
+              name: mariadb-secrets-volume
+              readOnly: true
+              subPath: MYSQL_PASSWORD
+            - mountPath: /var/www/html/wp-content/
+              name: wordpress-volume
+              subPath: {{ .Values.site_name }}/wp-content
+          env:
+            - name: WORDPRESS_DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  key: MYSQL_USER
+                  name: {{ .Values.app_name }}-config-{{ .Values.site_name }}
+            - name: WORDPRESS_DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  key: MYSQL_DATABASE
+                  name: {{ .Values.app_name }}-config-{{ .Values.site_name }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.app_name }}-config-{{ .Values.site_name }}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          resources:
+            limits:
+              cpu: {{ .Values.wordpress_cpu_limit }}
+              memory: {{ .Values.wordpress_memory_limit }}
+            requests:
+              cpu: {{ .Values.wordpress_cpu_request }}
+              memory: {{ .Values.wordpress_memory_request }}
+        - name: {{ .Values.app_name }}-nginx-{{ .Values.site_name }}
+          image: image-registry.openshift-image-registry.svc:5000/{{ .Values.project_namespace }}-tools/{{ .Values.app_name }}-nginx-run:{{ .Values.env_name }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.nginx_app_port }}
+              name: {{ .Values.nginx_app_port }}-tcp
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /var/www/html
+              name: wordpress-htdocs
+            - mountPath: /var/www/html/wp-content/
+              name: wordpress-volume
+              subPath: {{ .Values.site_name }}/wp-content
+            - mountPath: /etc/nginx/conf.d/nginx.conf
+              name: nginx-configmap-volume
+              subPath: nginx.conf
+          resources:
+            limits:
+              cpu: {{ .Values.wordpress_cpu_limit }}
+              memory: {{ .Values.wordpress_memory_limit }}
+            requests:
+              cpu: {{ .Values.wordpress_cpu_request }}
+              memory: {{ .Values.wordpress_memory_request }}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          # dnsPolicy: ClusterFirst
+          # restartPolicy: Always
+          # schedulerName: default-scheduler
+          securityContext: { }
+          # terminationGracePeriodSeconds: 30

@@ -13,3 +13,4 @@ replicas: "1"
 role_name: mariadb
 site_name: payments
 volume_size: 500M
+config_role_name: config

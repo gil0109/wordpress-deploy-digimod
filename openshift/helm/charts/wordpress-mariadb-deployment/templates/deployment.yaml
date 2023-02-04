@@ -3,13 +3,13 @@ kind: Deployment
 metadata:
   annotations:
     image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"{{ .Values.app_name }}-mariadb-run:{{ .Values.env_name }}","namespace":
-      "{{ .Values.project_namespace }}-tools"},"fieldPath":"spec.template.spec.containers[?(@.name==\"{{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}\")].image"}]'
+      "{{ .Values.project_namespace }}-tools"},"fieldPath":"spec.template.spec.containers[?(@.name==\"{{ .Values.app_name }}-{{ .Values.role_name }}-{{ .Values.site_name }}\")].image"}]'
   labels:
     app.kubernetes.io/component: backend
     app.kubernetes.io/instance: coreDB
     app.kubernetes.io/part-of: {{ .Values.app_name }}
     app.openshift.io/runtime: mariadb
-  name: {{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}
+  name: {{ .Values.app_name }}-{{ .Values.role_name }}-{{ .Values.site_name }}
   namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
 spec:
   replicas: {{ .Values.replicas }}
@@ -17,7 +17,7 @@ spec:
     matchLabels:
       app: {{ .Values.app_name }}
       env: {{ .Values.env_name }}
-      name: {{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}
+      name: {{ .Values.app_name }}-{{ .Values.role_name }}-{{ .Values.site_name }}
       role: {{ .Values.role_name }}
       site: {{ .Values.site_name }}
   strategy:
@@ -29,7 +29,7 @@ spec:
       labels:
         app: {{ .Values.app_name }}
         env: {{ .Values.env_name }}
-        name: {{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}
+        name: {{ .Values.app_name }}-{{ .Values.role_name }}-{{ .Values.site_name }}
         net-tcp-3306: server
         role: {{ .Values.role_name }}
         site: {{ .Values.site_name }}
@@ -42,10 +42,10 @@ spec:
           value: /run/secrets/mysql_password
         envFrom:
         - configMapRef:
-            name: {{ .Values.app_name }}-config--{{ .Values.site_name }}
+            name: {{ .Values.app_name }}-config-{{ .Values.site_name }}
         image: image-registry.openshift-image-registry.svc:5000/{{ .Values.project_namespace }}-tools/wordpress-mariadb-run:{{ .Values.env_name }}
         imagePullPolicy: Always
-        name: {{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}
+        name: {{ .Values.app_name }}-{{ .Values.role_name }}-{{ .Values.site_name }}
         ports:
         - containerPort: {{ .Values.app_port }}
           protocol: TCP
@@ -76,7 +76,7 @@ spec:
           items:
           - key: my.cnf
             path: my.cnf
-          name: {{ .Values.app_name }}-config--{{ .Values.site_name }}
+          name: {{ .Values.app_name }}-config-{{ .Values.site_name }}
         name: db-configmap-volume
       - name: db-secrets-volume
         secret:
@@ -86,7 +86,7 @@ spec:
             path: mysql_password
           - key: MYSQL_ROOT_PASSWORD
             path: mysql_root_password
-          secretName: {{ .Values.app_name }}-{{ .Values.role_name }}-secrets--{{ .Values.site_name }}
+          secretName: {{ .Values.app_name }}-{{ .Values.role_name }}-secrets-{{ .Values.site_name }}
       - name: db-volume
         persistentVolumeClaim:
-          claimName: {{ .Values.app_name }}-{{ .Values.role_name }}--{{ .Values.site_name }}
+          claimName: {{ .Values.app_name }}-{{ .Values.role_name }}-{{ .Values.site_name }}

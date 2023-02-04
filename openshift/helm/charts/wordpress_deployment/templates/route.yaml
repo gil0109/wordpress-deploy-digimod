@@ -1,0 +1,28 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    description: The Route for the {{ .Values.app_name }} application for {{ .Values.site_name }} in {{ .Values.env_name }}
+  labels:
+    app: {{ .Values.app_name }}
+    env: {{ .Values.env_name }}
+    name: {{ .Values.app_name }}-{{ .Values.nginx_role_name }}-{{ .Values.site_name }}
+    role: {{ .Values.nginx_role_name }}
+    site: {{ .Values.site_name }}
+  name: {{ .Values.app_name }}-{{ .Values.nginx_role_name }}-{{ .Values.site_name }}
+  namespace: {{ .Values.project_namespace }}-{{ .Values.env_name }}
+spec:
+  host: {{ .Values.app_domain }}
+  port:
+    targetPort: {{ .Values.nginx_app_port }}-tcp
+  tls:
+    caCertificate: ""
+    certificate: ""
+    insecureEdgeTerminationPolicy: Redirect
+    key: ""
+    termination: edge
+  to:
+    kind: Service
+    name: {{ .Values.app_name }}-{{ .Values.nginx_role_name }}-{{ .Values.site_name }}
+    weight: 100
+  wildcardPolicy: None
