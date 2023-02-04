@@ -1,0 +1,5 @@
+app_name: ubi8-nextjs
+env_name: tools
+git_url: https://github.com/bcgov/nextjs-digimod
+image_tag: latest
+project_namespace: e49a54

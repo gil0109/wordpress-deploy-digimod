@@ -1,0 +1,69 @@
+kind: Template
+apiVersion: v1
+metadata:
+  name: build-wordpress-nextjs
+  annotations:
+    openshift.io/display-name: nextjs
+    description: Build templates for the nextjs
+    tags: nexjs,wordpress
+
+
+parameters:
+
+  - name: APP_NAME
+    displayName: "App Name"
+    description: "The name of the application (grouped)."
+    required: true
+    value: "ubi8-nextjs"
+  - name: GIT_URL
+    displayName: "GIT Source Repo URL"
+    description: "A GIT URL to your source code."
+    required: true
+    value: "https://github.com/bcgov/nextjs-digimod"
+  - name: PROJECT_NAMESPACE
+    displayName: "OpenShift Project Namespace"
+    description: "The namespace of the OpenShift project containing the application."
+    required: true
+    value: "e49a54"
+
+  - name: ENV_NAME
+    displayName: "Environment name"
+    description: "The name for this environment [dev, test, prod, tools]"
+    required: true
+    value: "tools"
+  - name: IMAGE_TAG
+    displayName: "Output Image Tag"
+    description: "The tag given to the built image."
+    required: true
+    value: "latest"
+
+objects:
+
+  - kind: ImageStream
+    apiVersion: image.openshift.io/v1
+    metadata:
+      name: ${APP_NAME}
+      namespace: ${PROJECT_NAMESPACE}-${ENV_NAME}
+  - kind: BuildConfig
+    apiVersion: build.openshift.io/v1
+    kind: BuildConfig
+    metadata:
+      name: ${APP_NAME}
+      labels:
+        app: ${APP_NAME}
+    spec:
+      source:
+        type: Git
+        git:
+          uri: ${GIT_URL}
+        contextDir: 
+      strategy:
+        type: Docker                      
+        dockerStrategy:
+          dockerfilePath: Dockerfile    # Look for Dockerfile in: gitUri/contextDir/dockerfilePath
+      triggers:
+        - type: ConfigChange
+      output:
+        to:
+          kind: ImageStreamTag
+          name: ${APP_NAME}:${IMAGE_TAG}
