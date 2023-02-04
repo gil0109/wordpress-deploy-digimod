@@ -41,6 +41,7 @@ spec:
         name: {{ .Values.app_name }}-{{ .Values.nginx_role_name }}-{{ .Values.site_name }}
         net-tcp-8080: server
         net-tcp-9000: client
+        net-tcp-3306: client
         role: {{ .Values.nginx_role_name }}
         site: {{ .Values.site_name }}
     spec:
@@ -116,9 +117,9 @@ spec:
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           resources:
-            limits:
-              cpu: {{ .Values.wordpress_cpu_limit }}
-              memory: {{ .Values.wordpress_memory_limit }}
+            # limits:
+            #   cpu: {{ .Values.wordpress_cpu_limit }}
+            #   memory: {{ .Values.wordpress_memory_limit }}
             requests:
               cpu: {{ .Values.wordpress_cpu_request }}
               memory: {{ .Values.wordpress_memory_request }}
@@ -139,9 +140,9 @@ spec:
               name: nginx-configmap-volume
               subPath: nginx.conf
           resources:
-            limits:
-              cpu: {{ .Values.wordpress_cpu_limit }}
-              memory: {{ .Values.wordpress_memory_limit }}
+            # limits:
+            #   cpu: {{ .Values.wordpress_cpu_limit }}
+            #   memory: {{ .Values.wordpress_memory_limit }}
             requests:
               cpu: {{ .Values.wordpress_cpu_request }}
               memory: {{ .Values.wordpress_memory_request }}
